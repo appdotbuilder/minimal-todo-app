@@ -1,14 +1,26 @@
+import { db } from '../db';
+import { todosTable } from '../db/schema';
 import { type CreateTodoInput, type Todo } from '../schema';
 
-export async function createTodo(input: CreateTodoInput): Promise<Todo> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new todo task and persisting it in the database.
-    // It should insert a new todo with the provided title, set completed to false by default,
-    // and return the created todo with its generated ID and timestamp.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createTodo = async (input: CreateTodoInput): Promise<Todo> => {
+  try {
+    // Insert todo record
+    const result = await db.insert(todosTable)
+      .values({
         title: input.title,
-        completed: false, // Default value for new todos
-        created_at: new Date() // Placeholder date
-    } as Todo);
-}
+        completed: false // Default value for new todos
+      })
+      .returning()
+      .execute();
+
+    // Return the created todo
+    const todo = result[0];
+    return {
+      ...todo,
+      created_at: todo.created_at // Date is already properly handled by Drizzle
+    };
+  } catch (error) {
+    console.error('Todo creation failed:', error);
+    throw error;
+  }
+};
